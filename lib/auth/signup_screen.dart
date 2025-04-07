@@ -21,6 +21,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _rollNo = TextEditingController(); // NEW: Controller for Roll No
 
   String _selectedRole = 'Student';
   final List<String> _roles = ['Student', 'Teacher', 'HOD'];
@@ -32,6 +33,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _name.dispose();
     _email.dispose();
     _password.dispose();
+    _rollNo.dispose(); // NEW: Dispose roll no controller
     super.dispose();
   }
 
@@ -88,6 +90,19 @@ class _SignupScreenState extends State<SignupScreen> {
               },
             ),
             const SizedBox(height: 20),
+
+            // Conditionally show Roll No field
+            if (_selectedRole == 'Student')
+              Column(
+                children: [
+                  CustomTextField(
+                    hint: "Enter Roll No",
+                    label: "Roll No",
+                    controller: _rollNo,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
 
             // Error Message Display
             if (_errorMessage.isNotEmpty)
@@ -150,13 +165,20 @@ class _SignupScreenState extends State<SignupScreen> {
       );
 
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
+        final userData = {
           'uid': user.uid,
           'name': _name.text.trim(),
           'email': _email.text.trim(),
           'role': _selectedRole,
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        };
+
+        // Add Roll No only if the user is a Student
+        if (_selectedRole == 'Student') {
+          userData['rollNo'] = _rollNo.text.trim();
+        }
+
+        await _firestore.collection('users').doc(user.uid).set(userData);
 
         log("User Created Successfully");
         goToHome(context);
