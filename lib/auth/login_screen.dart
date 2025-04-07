@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Spacer(),
               const Text(
                 "Login",
-                style: TextStyle(fontSize: 40, fontWeight: FontWeight.w500, color: Colors.black),
+                style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.blue),
               ),
               const SizedBox(height: 50),
               CustomTextField(
