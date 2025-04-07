@@ -101,15 +101,25 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void goToSignup(BuildContext context) => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const SignupScreen()),
-  );
+  void goToSignup(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SignupScreen()),
+    );
+  }
 
-  void goToDashboard(BuildContext context, String role) {
+  void goToDashboard(BuildContext context, String role, {String? name, String? rollNo}) {
     switch (role) {
       case "Student":
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => StudentDashboard()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => StudentDashboard(
+              name: name ?? 'Student',
+              rollNo: rollNo ?? 'Unknown',
+            ),
+          ),
+        );
         break;
       case "Teacher":
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => TeacherDashboard()));
@@ -124,14 +134,29 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     final user = await _auth.loginUserWithEmailAndPassword(_email.text.trim(), _password.text.trim());
+
     if (user != null) {
       try {
         final doc = await FirebaseFirestore.instance.collection("users").doc(user.uid).get();
-        final role = doc.data()?['role'];
+        final data = doc.data();
+
+        if (data == null) {
+          throw Exception("User data not found.");
+        }
+
+        final role = data['role'];
+        final name = data['name'];
+        final rollNo = data['rollNo'];
+
         if (role != null) {
           _role = role;
           log("Logged in as $_role");
-          goToDashboard(context, _role!);
+
+          if (role == "Student") {
+            goToDashboard(context, role, name: name, rollNo: rollNo);
+          } else {
+            goToDashboard(context, role);
+          }
         } else {
           log("Role not found in database.");
           ScaffoldMessenger.of(context).showSnackBar(
