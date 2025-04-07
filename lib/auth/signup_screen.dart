@@ -21,6 +21,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _rollNo = TextEditingController();
 
   String _selectedRole = 'Student';
   final List<String> _roles = ['Student', 'Teacher', 'HOD'];
@@ -32,6 +33,8 @@ class _SignupScreenState extends State<SignupScreen> {
     _name.dispose();
     _email.dispose();
     _password.dispose();
+    if (_selectedRole == 'Student')
+      _rollNo.dispose();
     super.dispose();
   }
 
@@ -69,6 +72,13 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 20),
 
+            CustomTextField(
+              hint: "Enter Roll No.",
+              label: "Roll No.",
+              controller: _rollNo,
+            ),
+            const SizedBox(height: 20),
+
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(
                 labelText: "Select Role",
@@ -76,10 +86,11 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               value: _selectedRole,
               items: _roles
-                  .map((role) => DropdownMenuItem(
-                value: role,
-                child: Text(role),
-              ))
+                  .map((role) =>
+                  DropdownMenuItem(
+                    value: role,
+                    child: Text(role),
+                  ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -128,15 +139,17 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  goToLogin(BuildContext context) => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const LoginScreen()),
-  );
+  goToLogin(BuildContext context) =>
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
 
-  goToHome(BuildContext context) => Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => const HomeScreen()),
-  );
+  goToHome(BuildContext context) =>
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
 
   _signup() async {
     setState(() {
@@ -144,19 +157,22 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
+      final role = _selectedRole.toLowerCase(); // convert role to lowercase
+
       final user = await _auth.createUserWithEmailAndPassword(
-        _email.text.trim(),
-        _password.text.trim(),
+        email: _email.text.trim(),
+        password: _password.text.trim(),
+        name: _name.text.trim(),
+        role: role,
       );
 
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'name': _name.text.trim(),
-          'email': _email.text.trim(),
-          'role': _selectedRole,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        // Add extra fields like rollNo for students only
+        if (role == 'student') {
+          await _firestore.collection('users').doc(user.uid).update({
+            'rollNo': _rollNo.text.trim(),
+          });
+        }
 
         log("User Created Successfully");
         goToHome(context);
@@ -164,7 +180,10 @@ class _SignupScreenState extends State<SignupScreen> {
     } catch (e) {
       log("Signup Error: $e");
       setState(() {
-        _errorMessage = e.toString().split('] ').last; // Clean error message
+        _errorMessage = e
+            .toString()
+            .split('] ')
+            .last;
       });
     }
   }

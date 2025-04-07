@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:department_management/attendence/teacher_attendence_screen.dart';
+import 'package:department_management/auth/auth_service.dart';
 
 class TeacherDashboard extends StatefulWidget {
   final bool advanced;
@@ -104,8 +106,29 @@ class ApproveMaterialsScreen extends StatelessWidget {
 
 class ManageAttendanceScreen extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text('Manage Attendance')));
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Manage Attendance')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            final currentUser = AuthService().getCurrentUser();
+            final teacherId = currentUser?.uid ?? 'unknown'; // fallback just in case
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TeacherAttendanceScreen(teacherId: teacherId),
+              ),
+            );
+          },
+          child: Text("Mark Attendance"),
+        ),
+      ),
+    );
+  }
 }
+
 
 class ViewComplaintsScreen extends StatelessWidget {
   @override
